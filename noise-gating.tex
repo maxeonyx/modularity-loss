@@ -52,16 +52,16 @@
 
 I have an idea for a "noise gate" which can gate the activations of some neural network component, such that it can be learned when or when not to turn off, but also which guarantees that when it's turned off, it's really turned off (And we needn't worry the potential ability of the network to hide information in small fluctuations of the activations.)
 
-\section{Mix-Add}
+\section{\text{Mix}-Add}
 
-I've just tried out a ``Mix-Add'' operation $lma(a, b, m)$ that adds two vectors $a$ and $b$ which have some norm, let's say both have norm of 1, and scales them before adding them such that the resulting vector has norm of 1. The scaling factor $m$ is a learnable parameter. In maths:
+I've just tried out a ``\text{Mix}-Add'' operation $\text{\text{mix}}(a, b, m)$ that adds two vectors $a$ and $b$ which have some norm, let's say both have norm of 1, and scales them before adding them such that the resulting vector has norm of 1. The scaling factor $m$ is a learnable parameter. In maths:
 \begin{align*}
     \text{sigmoid}(m) &= \sigma(m) = \frac{1}{1 + e^{-m}} \\
-    \text{lma}(a, b, m) &≝ a \sqrt{\sigma(m)} + b \sqrt{1 - \sigma(m)} \\
-    \text{residual}(x, f) &= \text{lma}(x, f(x), m) \\
+    \text{\text{mix}}(a, b, m) &≝ a \sqrt{\sigma(m)} + b \sqrt{1 - \sigma(m)} \\
+    \text{residual}(x, f) &= \text{\text{mix}}(x, f(x), m) \\
     m &\in \mathbb{R}
 \end{align*}
-where $f$ is a residual block and $m$ is a learned mixing parameter (which we can set high at the start of training to keep the gradient particularly stable). Also $\sigma$ doesn't have to be the sigmoid function, it could be any function that maps $\mathbb{R}$ to $[0, 1]$.
+where $f$ is a residual block and $m$ is a learned \text{mix}ing parameter (which we can set high at the start of training to keep the gradient particularly stable). Also $\sigma$ doesn't have to be the sigmoid function, it could be any function that maps $\mathbb{R}$ to $[0, 1]$.
 
 \section{Noise gate}
 
@@ -71,7 +71,7 @@ Let $n ~ N(\mu = 0, \sigma = frac{1}{\sqrt{D}})$ be some noise vector sampled fr
 
 Let's also say we have some large batch of residual block outputs $f(\mathbf{x})$. We can regularize the distribution of $f(\mathbf{x})$ to be Gaussian with a certain variance using a witness function like MMD (or with a learned discriminator) as in \cite{bir-vae}. Each $f(x_i)$ is constrained to be within some region of the space.
 
-Then, if we add $x_{noisy} = lma(n, x, m)$, for some $m$, we restrict the maximum information rate that can pass out of the residual block (for gaussians the signal-to-noise ratio is simply the ratio of the variance of the signal to the variance of the noise).
+Then, if we add $x_{noisy} = \text{mix}(n, x, m)$, for some $m$, we restrict the maximum information rate that can pass out of the residual block (for gaussians the signal-to-noise ratio is simply the ratio of the variance of the signal to the variance of the noise).
 
 Ok, but now the noise will mess up the residual stream? Well, we can add a second gate that gates the noise, so that when the noise is being added, the residual block is \textit{not} being added.
 
@@ -80,7 +80,7 @@ So the whole thing is:
     f &= \text{residual block} \\
     n &= \text{noise} \\
     m &= \text{mixing parameter} \\
-    \text{noise gate}(x, f) &= \text{lma}(x, lma(n, f(x), m), m)
+    \text{noise gate}(x, f) &= \text{mix}(x, \text{\text{mix}}(n, f(x), m), m)
 \end{align*}
 where when $m$ is high, the noise is high but is not being added to the residual stream, and when $m$ is low, the noise is low and is being added to the residual stream.
 
@@ -88,11 +88,14 @@ where when $m$ is high, the noise is high but is not being added to the residual
 
 If we add another loss term \footnote{the one we have already is a discriminator/witness function which keeps the residual block outputs gaussian} then we can regularize a network to be more or less modular.
 
-What this means is that we should incentivize the network to set the mixing parameter $m$ to be high (high noise, low addition to residual stream) for as many residual blocks as possible.
+What this means is that we should incentivize the network to set the \text{mix}ing parameter $m$ to be high (high noise, low addition to residual stream) for as many residual blocks as possible.
 
 If we fix $m$ then we have an ordinary residual network.
 
 If we learn $m$ as a weight, then the network will eventually learn to use the fewest residual blocks possible for the task.
 
 If the network can compute $m$ as a function of the activations in previous layers, then the network will eventu learn when and when not to set $m$ high. The network should learn blocks that are very useful for some inputs, but can be turned off for others.
+
+\printbibliography
+
 \end{document}
