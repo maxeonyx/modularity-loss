@@ -50,6 +50,16 @@
 
 \maketitle
 
+
+\section{TL;DR}
+    \begin{enumerate}
+        \item Regularise residual block (or other "module") outputs to be gaussian with a witness function / discriminator.
+        \item Mix noise with residual block outputs to limit the information rate, and prevent against low-value information leakage.
+        \item Don't screw up the residual stream with noise, by coupling the mixing parameter of adding the noise with the mixing parameter of adding to the residual stream.
+    \end{enumerate}
+
+\section{Idea}
+
 I have an idea for a "noise gate" which can gate the activations of some neural network component, such that it can be learned when or when not to turn off, but also which guarantees that when it's turned off, it's really turned off (And we needn't worry the potential ability of the network to hide information in small fluctuations of the activations.)
 
 \section{\text{Mix}-Add}
@@ -67,7 +77,7 @@ where $f$ is a residual block and $m$ is a learned \text{mix}ing parameter (whic
 
 I realized we might be able to use this to make a kind of principled modularity gate, an "information gate", that lets the network choose an information rate for a given residual block.
 
-Let $n ~ N(\mu = 0, \sigma = frac{1}{\sqrt{D}})$ be some noise vector sampled from a Gaussian independently at each training step, which has norm $\approx 1$.
+Let $n \sim (\mu = 0, \sigma = frac{1}{\sqrt{D}})$ be some noise vector sampled from a Gaussian independently at each training step, which has norm $\approx 1$.
 
 Let's also say we have some large batch of residual block outputs $f(\mathbf{x})$. We can regularize the distribution of $f(\mathbf{x})$ to be Gaussian with a certain variance using a witness function like MMD (or with a learned discriminator) as in \cite{bir-vae}. Each $f(x_i)$ is constrained to be within some region of the space.
 
